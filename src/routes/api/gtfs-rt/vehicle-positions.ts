@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/gtfs-rt/vehicle-positions")({
         }
 
         const pb = buildVehiclePositionsFeed(arrivals);
-        return new Response(pb, {
+        return new Response(pb.buffer as ArrayBuffer, {
           headers: {
             "Content-Type": "application/x-protobuf",
             "Access-Control-Allow-Origin": "*",
