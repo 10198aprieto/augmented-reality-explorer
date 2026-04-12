@@ -10,33 +10,61 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiGtfsRtVehiclePositionsRouteImport } from './routes/api/gtfs-rt/vehicle-positions'
+import { Route as ApiGtfsRtTripUpdatesRouteImport } from './routes/api/gtfs-rt/trip-updates'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGtfsRtVehiclePositionsRoute =
+  ApiGtfsRtVehiclePositionsRouteImport.update({
+    id: '/api/gtfs-rt/vehicle-positions',
+    path: '/api/gtfs-rt/vehicle-positions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiGtfsRtTripUpdatesRoute = ApiGtfsRtTripUpdatesRouteImport.update({
+  id: '/api/gtfs-rt/trip-updates',
+  path: '/api/gtfs-rt/trip-updates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/gtfs-rt/trip-updates': typeof ApiGtfsRtTripUpdatesRoute
+  '/api/gtfs-rt/vehicle-positions': typeof ApiGtfsRtVehiclePositionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/gtfs-rt/trip-updates': typeof ApiGtfsRtTripUpdatesRoute
+  '/api/gtfs-rt/vehicle-positions': typeof ApiGtfsRtVehiclePositionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/gtfs-rt/trip-updates': typeof ApiGtfsRtTripUpdatesRoute
+  '/api/gtfs-rt/vehicle-positions': typeof ApiGtfsRtVehiclePositionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/gtfs-rt/trip-updates'
+    | '/api/gtfs-rt/vehicle-positions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/gtfs-rt/trip-updates' | '/api/gtfs-rt/vehicle-positions'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/gtfs-rt/trip-updates'
+    | '/api/gtfs-rt/vehicle-positions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiGtfsRtTripUpdatesRoute: typeof ApiGtfsRtTripUpdatesRoute
+  ApiGtfsRtVehiclePositionsRoute: typeof ApiGtfsRtVehiclePositionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +76,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/gtfs-rt/vehicle-positions': {
+      id: '/api/gtfs-rt/vehicle-positions'
+      path: '/api/gtfs-rt/vehicle-positions'
+      fullPath: '/api/gtfs-rt/vehicle-positions'
+      preLoaderRoute: typeof ApiGtfsRtVehiclePositionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gtfs-rt/trip-updates': {
+      id: '/api/gtfs-rt/trip-updates'
+      path: '/api/gtfs-rt/trip-updates'
+      fullPath: '/api/gtfs-rt/trip-updates'
+      preLoaderRoute: typeof ApiGtfsRtTripUpdatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiGtfsRtTripUpdatesRoute: ApiGtfsRtTripUpdatesRoute,
+  ApiGtfsRtVehiclePositionsRoute: ApiGtfsRtVehiclePositionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
