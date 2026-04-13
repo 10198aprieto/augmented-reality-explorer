@@ -12,47 +12,60 @@ export interface ArrivalData {
   lon: number;
   speed?: number;
   bearing?: number;
+  directionId?: string;
+  tripHeadsign?: string;
+  routeShortName?: string;
+  routeColor?: string;
+  isEstimated?: boolean;
 }
 
 const BASE_URL = "https://arroyo.actiosae.com/bff/mobile/arrivals";
+const FEED_ID = "arroyo";
+
+function getApiKey(): string {
+  return process.env.ACTIOSAE_API_KEY || "";
+}
 
 async function fetchStopArrivals(stopId: string): Promise<ArrivalData[]> {
   try {
-    const res = await fetch(`${BASE_URL}/${stopId}`, {
+    const apiKey = getApiKey();
+    const url = `${BASE_URL}/${stopId}?feedId=${FEED_ID}${apiKey ? `&key=${apiKey}` : ""}`;
+
+    const res = await fetch(url, {
       headers: {
         "Accept": "application/json",
         "User-Agent": "ArroyoBus-GTFSRT/1.0",
       },
     });
     if (!res.ok) return [];
-    const json = await res.json() as any;
+    const json = await res.json() as any[];
+
+    if (!Array.isArray(json)) return [];
 
     const arrivals: ArrivalData[] = [];
-    const lines = json?.lines || [];
 
-    for (const line of lines) {
-      const destinations = line?.destinations || [];
-      for (const dest of destinations) {
-        const trips = dest?.trips || [];
-        for (const trip of trips) {
-          if (trip.tripId && trip.vehicleId) {
-            arrivals.push({
-              tripId: String(trip.tripId),
-              vehicleId: String(trip.vehicleId),
-              routeId: String(line.lineId || line.id || ""),
-              routeName: String(line.name || ""),
-              stopId,
-              stopName: String(json.stopName || json.name || ""),
-              estimatedArrival: trip.estimatedArrival
-                ? Math.floor(new Date(trip.estimatedArrival).getTime() / 1000)
-                : Math.floor(Date.now() / 1000),
-              lat: trip.lat ?? trip.latitude ?? 0,
-              lon: trip.lon ?? trip.longitude ?? 0,
-              speed: trip.speed,
-              bearing: trip.bearing,
-            });
-          }
-        }
+    for (const item of json) {
+      if (item.tripId && item.vehicleId) {
+        arrivals.push({
+          tripId: String(item.tripId),
+          vehicleId: String(item.vehicleId),
+          routeId: String(item.route?.routeId || ""),
+          routeName: String(item.route?.routeName || ""),
+          routeShortName: item.route?.routeShortName,
+          routeColor: item.route?.color,
+          stopId: String(item.stopId || stopId),
+          stopName: String(item.stopName || ""),
+          estimatedArrival: item.arrivalTime
+            ? Math.floor(new Date(item.arrivalTime).getTime() / 1000)
+            : Math.floor(Date.now() / 1000),
+          lat: item.lat ?? 0,
+          lon: item.lon ?? 0,
+          speed: item.speed,
+          bearing: item.bearing,
+          directionId: item.directionId,
+          tripHeadsign: item.tripHeadsign,
+          isEstimated: item.isEstimated,
+        });
       }
     }
     return arrivals;
@@ -62,7 +75,6 @@ async function fetchStopArrivals(stopId: string): Promise<ArrivalData[]> {
 }
 
 export async function fetchAllArrivals(): Promise<ArrivalData[]> {
-  // Fetch in batches of 10 to avoid overwhelming the API
   const allArrivals: ArrivalData[] = [];
   const batchSize = 10;
 
