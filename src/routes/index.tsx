@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bus, MapPin, Clock, ExternalLink } from "lucide-react";
+import { Bus, MapPin, Clock, ExternalLink, Download, FileArchive } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -69,6 +69,23 @@ function Index() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="border border-border rounded-xl p-6 bg-card">
+          <div className="flex items-center gap-2 mb-2">
+            <FileArchive className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold">GTFS Static</h2>
+          </div>
+          <p className="text-muted-foreground mb-4">
+            Datos estáticos del servicio: paradas, rutas, horarios y calendario en formato GTFS.
+          </p>
+          <a
+            href="/GTFS_Static.zip"
+            download
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <Download className="w-3.5 h-3.5" /> Descargar GTFS_Static.zip
+          </a>
         </div>
 
         <div className="mt-12 p-6 bg-muted/50 rounded-xl">
