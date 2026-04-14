@@ -59,8 +59,9 @@ export default function BusMap() {
         activeIds.add(id);
         const latlng: [number, number] = [pos.latitude, pos.longitude];
 
-        const label = e.vehicle?.vehicle?.label || e.vehicle?.vehicle?.id || id;
-        const route = e.vehicle?.trip?.routeId || "—";
+        const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        const label = esc(String(e.vehicle?.vehicle?.label || e.vehicle?.vehicle?.id || id));
+        const route = esc(String(e.vehicle?.trip?.routeId || "—"));
         const speed = pos.speed != null ? `${(pos.speed * 3.6).toFixed(0)} km/h` : "—";
 
         const popupContent = `

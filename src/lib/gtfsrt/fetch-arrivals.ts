@@ -74,7 +74,17 @@ async function fetchStopArrivals(stopId: string): Promise<ArrivalData[]> {
   }
 }
 
+// In-memory cache to prevent upstream API abuse
+let cachedArrivals: ArrivalData[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 15_000; // 15 seconds
+
 export async function fetchAllArrivals(): Promise<ArrivalData[]> {
+  const now = Date.now();
+  if (cachedArrivals && now - cacheTimestamp < CACHE_TTL_MS) {
+    return cachedArrivals;
+  }
+
   const allArrivals: ArrivalData[] = [];
   const batchSize = 10;
 
@@ -84,5 +94,7 @@ export async function fetchAllArrivals(): Promise<ArrivalData[]> {
     for (const r of results) allArrivals.push(...r);
   }
 
+  cachedArrivals = allArrivals;
+  cacheTimestamp = now;
   return allArrivals;
 }
