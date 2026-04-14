@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Bus, MapPin, Clock, ExternalLink, Download, FileArchive } from "lucide-react";
+import { lazy, Suspense } from "react";
+
+const BusMap = lazy(() => import("@/components/BusMap"));
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -40,6 +43,12 @@ function Index() {
           Feed GTFS Realtime del servicio de autobuses de Arroyo de la Encomienda (Valladolid).
           Datos actualizados cada consulta desde la API de ActioSAE.
         </p>
+
+        <div className="mb-8">
+          <Suspense fallback={<div className="border border-border rounded-xl h-[440px] bg-card animate-pulse" />}>
+            <BusMap />
+          </Suspense>
+        </div>
 
         <div className="space-y-6">
           {endpoints.map((ep) => (
