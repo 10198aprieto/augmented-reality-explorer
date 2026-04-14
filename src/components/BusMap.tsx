@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import { RefreshCw } from "lucide-react";
 
 interface VehicleEntity {
@@ -21,20 +19,11 @@ interface FeedResponse {
 const ARROYO_CENTER: [number, number] = [41.6167, -4.7836];
 const REFRESH_INTERVAL = 15_000;
 
-const busIcon = L.divIcon({
-  html: `<div style="background:hsl(221,83%,53%);width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2Z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
-  </div>`,
-  className: "",
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-  popupAnchor: [0, -16],
-});
-
 export default function BusMap() {
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const markersRef = useRef<Map<string, any>>(new Map());
+  const leafletRef = useRef<any>(null);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string>("");
@@ -47,7 +36,18 @@ export default function BusMap() {
       const entities = data.entity ?? [];
 
       const map = mapRef.current;
-      if (!map) return;
+      const L = leafletRef.current;
+      if (!map || !L) return;
+
+      const busIcon = L.divIcon({
+        html: `<div style="background:hsl(221,83%,53%);width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2Z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+        </div>`,
+        className: "",
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -16],
+      });
 
       const activeIds = new Set<string>();
 
@@ -82,7 +82,6 @@ export default function BusMap() {
         }
       }
 
-      // Remove stale markers
       for (const [id, marker] of markersRef.current) {
         if (!activeIds.has(id)) {
           map.removeLayer(marker);
@@ -102,25 +101,40 @@ export default function BusMap() {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const map = L.map(containerRef.current, {
-      center: ARROYO_CENTER,
-      zoom: 14,
-      zoomControl: true,
-    });
+    let cancelled = false;
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(map);
+    (async () => {
+      const L = await import("leaflet");
+      await import("leaflet/dist/leaflet.css");
 
-    mapRef.current = map;
-    fetchVehicles();
+      if (cancelled || !containerRef.current) return;
+
+      leafletRef.current = L.default || L;
+      const Leaf = leafletRef.current;
+
+      const map = Leaf.map(containerRef.current, {
+        center: ARROYO_CENTER,
+        zoom: 14,
+        zoomControl: true,
+      });
+
+      Leaf.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+
+      mapRef.current = map;
+      fetchVehicles();
+    })();
 
     const interval = setInterval(fetchVehicles, REFRESH_INTERVAL);
     return () => {
+      cancelled = true;
       clearInterval(interval);
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
       markersRef.current.clear();
     };
   }, [fetchVehicles]);
